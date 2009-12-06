@@ -142,15 +142,15 @@ execfile(__file__)
         logger.indent -= 2
 
 
-def main():
-    # setup
-    if not os.path.exists(DATA_DIR):
-        os.makedirs(DATA_DIR)
-    if os.path.exists(WORK_DIR):
-        shutil.rmtree(WORK_DIR)
-        os.makedirs(WORK_DIR)
+def run(data_dir, work_dir, repositories_file, completed_file):
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
     
-    repositories = read_repositories(REPOSITORIES_FILE)
+    if os.path.exists(work_dir):
+        shutil.rmtree(work_dir)
+        os.makedirs(work_dir)
+    
+    repositories = read_repositories(repositories_file)
     
     commits = []
     for kind, user, repository in repositories:
@@ -158,7 +158,7 @@ def main():
             head = find_head_github(user, repository)
         commits.append((user, repository, head))
     
-    completed = read_json_file(COMPLETED_FILE)
+    completed = read_json_file(completed_file)
     completed_cache = dict([(c, True) for u, r, c in completed])
     
     try:
@@ -178,10 +178,21 @@ def main():
             completed.append((user, repository, commit))
             logger.indent -= 2
     finally:
-        if os.path.exists(WORK_DIR):
-            shutil.rmtree(WORK_DIR)
+        if os.path.exists(work_dir):
+            shutil.rmtree(work_dir)
     
-    dump_json_items(COMPLETED_FILE, completed)
+    dump_json_items(completed_file, completed)
+
+
+def main():
+    
+    # @@@ optparse
+    data_dir = DATA_DIR
+    work_dir = WORK_DIR
+    repositories_file = REPOSITORIES_FILE
+    completed_file = COMPLETED_FILE
+    
+    run(data_dir, work_dir, repositories_file, completed_file)
 
 
 if __name__ == "__main__":
