@@ -1,1 +1,3 @@
 github pinax pinax
+github brosner django-openid
+bitbucket jezdez django-staticfiles

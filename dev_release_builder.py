@@ -74,14 +74,18 @@ def find_head_github(user, repository):
     return info["branches"]["master"]
 
 
-def download_tarball(user, repository, commit, show_progress=True):
+def download_tarball(kind, user, repository, commit, show_progress=True):
     """
     Given a repository name and SHA1 download and store the tarball
     """
     basename = build_basename(user, repository, commit)
     filename = os.path.join(DATA_DIR, "%s.tar.gz" % basename)
-    if not os.path.exists(filename):
-        url = "http://github.com/%s/%s/tarball/%s" % (user, repository, commit)
+    # force bitbucket to always download
+    if not os.path.exists(filename) or kind == "bitbucket":
+        if kind == "github":
+            url = "http://github.com/%s/%s/tarball/%s" % (user, repository, commit)
+        elif kind == "bitbucket":
+            url = "http://bitbucket.org/%s/%s/get/%s.tar.gz" % (user, repository, commit)
         response = urllib2.urlopen(url)
         try:
             total_length = int(response.info()["content-length"])
@@ -120,9 +124,12 @@ def download_tarball(user, repository, commit, show_progress=True):
     tar.extractall(path=WORK_DIR)
 
 
-def build_release(dist_dir, user, repository, commit):
+def build_release(dist_dir, kind, user, repository, commit):
     basename = build_basename(user, repository, commit)
-    source_dir = os.path.join(WORK_DIR, basename)
+    if kind == "github":
+        source_dir = os.path.join(WORK_DIR, basename)
+    elif kind == "bitbucket":
+        source_dir = os.path.join(WORK_DIR, repository)
     cmd = [
         sys.executable,
         "setup.py", "sdist",
@@ -149,13 +156,20 @@ def run(data_dir, work_dir, repositories_file, completed_file, dist_dir):
     for kind, user, repository in repositories:
         if kind == "github":
             head = find_head_github(user, repository)
-        commits.append((user, repository, head))
+        elif kind == "bitbucket":
+            # tip file download is the only way to get the latest from what
+            # i can tell
+            head = "tip"
+        else:
+            logger.warning("Unknown service")
+            continue
+        commits.append((kind, user, repository, head))
     
     completed = read_json_file(completed_file)
-    completed_cache = dict([(c, True) for u, r, c in completed])
+    completed_cache = dict([(c, True) for k, u, r, c in completed])
     
     try:
-        for user, repository, commit in commits:
+        for kind, user, repository, commit in commits:
             current = "%s/%s (%s)" % (user, repository, commit[:7])
             
             if commit in completed_cache:
@@ -165,10 +179,10 @@ def run(data_dir, work_dir, repositories_file, completed_file, dist_dir):
             logger.info("Handling %s" % current)
             logger.indent += 2
             
-            download_tarball(user, repository, commit)
-            build_release(dist_dir, user, repository, commit)
+            download_tarball(kind, user, repository, commit)
+            build_release(dist_dir, kind, user, repository, commit)
             
-            completed.append((user, repository, commit))
+            completed.append((kind, user, repository, commit))
             logger.indent -= 2
     finally:
         if os.path.exists(work_dir):
