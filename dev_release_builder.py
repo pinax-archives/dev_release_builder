@@ -187,8 +187,7 @@ def run(data_dir, work_dir, repositories_file, completed_file, dist_dir):
     finally:
         if os.path.exists(work_dir):
             shutil.rmtree(work_dir)
-    
-    dump_json_items(completed_file, completed)
+        dump_json_items(completed_file, completed)
 
 
 def main():
