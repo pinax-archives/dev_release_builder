@@ -81,7 +81,7 @@ def find_head_github(user, repository, branch=None):
     url = "http://github.com/api/v2/json/repos/show/%s/%s/branches" % (user, repository)
     response = urllib2.urlopen(url)
     info = json.loads(response.read())
-    return info["branches"]["master"]
+    return info["branches"][branch]
 
 
 def download_tarball(kind, user, repository, commit, show_progress=True):
@@ -169,7 +169,7 @@ def run(data_dir, work_dir, repositories_file, completed_file, dist_dir):
     commits = []
     for kind, user, repository, branch in repositories:
         if kind == "github":
-            head = find_head_github(user, repository)
+            head = find_head_github(user, repository, branch)
         elif kind == "bitbucket":
             # tip file download is the only way to get the latest from what
             # i can tell
