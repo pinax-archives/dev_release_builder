@@ -26,6 +26,7 @@ REPOSITORIES_FILE = os.path.join(os.path.dirname(__file__), "repositories.txt")
 COMPLETED_FILE = os.path.join(os.path.dirname(__file__), "completed")
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 WORK_DIR = os.path.join(DATA_DIR, "work")
+DIST_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "dist"))
 
 
 def format_size(bytes):
@@ -119,27 +120,22 @@ def download_tarball(user, repository, commit, show_progress=True):
     tar.extractall(path=WORK_DIR)
 
 
-def build_release(user, repository, commit):
-    _run_setup_py = """import os, sys
-__file__ = __SETUP_PY__
-sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-execfile(__file__)
-"""
+def build_release(dist_dir, user, repository, commit):
     basename = build_basename(user, repository, commit)
     source_dir = os.path.join(WORK_DIR, basename)
-    setup_py = os.path.join(source_dir, "setup.py")
-    script = _run_setup_py.replace("__SETUP_PY__", repr(setup_py))
-    logger.indent += 2
-    try:
-        call_subprocess([sys.executable, "-c", script, "sdist"],
-            show_stdout = False,
-            command_desc = "python setup.py sdist"
-        )
-    finally:
-        logger.indent -= 2
+    cmd = [
+        sys.executable,
+        "setup.py", "sdist",
+        "-d", dist_dir,
+    ]
+    call_subprocess(cmd,
+        cwd = source_dir,
+        show_stdout = False,
+        command_desc = "python setup.py sdist",
+    )
 
 
-def run(data_dir, work_dir, repositories_file, completed_file):
+def run(data_dir, work_dir, repositories_file, completed_file, dist_dir):
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
     
@@ -170,7 +166,7 @@ def run(data_dir, work_dir, repositories_file, completed_file):
             logger.indent += 2
             
             download_tarball(user, repository, commit)
-            build_release(user, repository, commit)
+            build_release(dist_dir, user, repository, commit)
             
             completed.append((user, repository, commit))
             logger.indent -= 2
@@ -188,8 +184,9 @@ def main():
     work_dir = WORK_DIR
     repositories_file = REPOSITORIES_FILE
     completed_file = COMPLETED_FILE
+    dist_dir = DIST_DIR
     
-    run(data_dir, work_dir, repositories_file, completed_file)
+    run(data_dir, work_dir, repositories_file, completed_file, dist_dir)
 
 
 if __name__ == "__main__":
