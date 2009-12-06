@@ -21,8 +21,8 @@ logger = Logger([(1, sys.stdout)])
 pip.logger = logger
 
 
-REPOSITORIES_FILE = os.path.join(os.path.dirname(__file__), "repositories")
-COMPLETED_FILE = os.path.join(os.path.dirname(__file__), "completed_work")
+REPOSITORIES_FILE = os.path.join(os.path.dirname(__file__), "repositories.txt")
+COMPLETED_FILE = os.path.join(os.path.dirname(__file__), "completed")
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 WORK_DIR = os.path.join(DATA_DIR, "work")
 
