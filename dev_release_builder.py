@@ -47,7 +47,15 @@ def build_basename(user, repository, commit):
 def read_repositories(filename):
     repos = []
     for line in open(filename, "rb"):
-        repos.append(line.split())
+        bits = line.split()
+        if len(bits) == 3:
+            kind, user, repository = bits
+            branch = None
+        elif len(bits) == 4:
+            kind, user, repository, branch = bits
+        else:
+            raise Exception("incompatible file format for '%s'" % filename)
+        repos.append((kind, user, repository, branch))
     return repos
 
 
@@ -67,7 +75,9 @@ def dump_json_items(filename, items):
     fp.close()
 
 
-def find_head_github(user, repository):
+def find_head_github(user, repository, branch=None):
+    if branch is None:
+        branch = "master"
     url = "http://github.com/api/v2/json/repos/show/%s/%s/branches" % (user, repository)
     response = urllib2.urlopen(url)
     info = json.loads(response.read())
@@ -157,7 +167,7 @@ def run(data_dir, work_dir, repositories_file, completed_file, dist_dir):
     repositories = read_repositories(repositories_file)
     
     commits = []
-    for kind, user, repository in repositories:
+    for kind, user, repository, branch in repositories:
         if kind == "github":
             head = find_head_github(user, repository)
         elif kind == "bitbucket":
