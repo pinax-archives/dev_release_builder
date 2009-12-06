@@ -130,9 +130,13 @@ def build_release(dist_dir, kind, user, repository, commit):
         source_dir = os.path.join(WORK_DIR, basename)
     elif kind == "bitbucket":
         source_dir = os.path.join(WORK_DIR, repository)
+    setup_py = os.path.realpath(os.path.join(source_dir, "setup.py"))
+    # use setuptools hack to allow egg_info in setup.cfg to work for
+    # development builds (requires setuptools in dev release environment)
     cmd = [
         sys.executable,
-        "setup.py", "sdist",
+        "-c", "import setuptools;__file__=%r;execfile(%r)" % (setup_py, setup_py),
+        "sdist",
         "-d", dist_dir,
     ]
     call_subprocess(cmd,
