@@ -10,6 +10,7 @@ except ImportError:
     import json
 
 import pip
+# @@@ fix me
 try:
     from pip.log import Logger
 except ImportError:
