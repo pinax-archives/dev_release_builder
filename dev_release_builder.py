@@ -27,10 +27,6 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 WORK_DIR = os.path.join(DATA_DIR, "work")
 
 
-class DownloadError(Exception):
-    pass
-
-
 def format_size(bytes):
     if bytes > 1000*1000:
         return "%.1fMb" % (bytes/1000.0/1000)
