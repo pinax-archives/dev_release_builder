@@ -182,7 +182,10 @@ def run(data_dir, work_dir, repositories_file, completed_file, dist_dir):
             download_tarball(kind, user, repository, commit)
             build_release(dist_dir, kind, user, repository, commit)
             
-            completed.append((kind, user, repository, commit))
+            # only non-bitbucket items get to be marked completed as they
+            # have a distinct commit we can ensure is completed
+            if not kind == "bitbucket":
+                completed.append((kind, user, repository, commit))
             logger.indent -= 2
     finally:
         if os.path.exists(work_dir):
